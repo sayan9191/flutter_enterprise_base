@@ -30,7 +30,7 @@ class _SplashPageState extends State<SplashPage> {
           if (!state.onboardingComplete) {
             context.go(RouteConstants.onboarding);
           } else if (state.isLoggedIn) {
-            context.go(RouteConstants.dashboard);
+            context.go(RouteConstants.home);
           } else {
             context.go(RouteConstants.login);
           }

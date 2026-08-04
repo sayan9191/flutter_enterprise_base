@@ -40,7 +40,11 @@ class _OtpPageState extends State<OtpPage> {
             children: [
               AppTextField(controller: _otpCtrl, label: 'OTP', keyboardType: TextInputType.number, validator: Validators.otp),
               const SizedBox(height: 24),
-              AppButton(label: 'Verify', isLoading: state.isLoading, onPressed: () {
+              AppButton(
+                expand: true,
+                label: 'Verify',
+                isLoading: state.isLoading,
+                onPressed: () {
                 context.read<AuthBloc>().add(AuthOtpVerifyRequested(email: widget.email, otp: _otpCtrl.text.trim()));
               }),
             ],

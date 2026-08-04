@@ -11,6 +11,8 @@ class Environment {
     required this.sslPinningEnabled,
     required this.featureBiometric,
     required this.featureOfflineMode,
+    required this.apiKey,
+    required this.reqresEnv,
   });
 
   final String appName;
@@ -24,8 +26,15 @@ class Environment {
   final bool featureBiometric;
   final bool featureOfflineMode;
 
+  /// ReqRes API key (required since 2025 — get free key at app.reqres.in/api-keys).
+  final String apiKey;
+
+  /// ReqRes environment header for collection endpoints.
+  final String reqresEnv;
+
   bool get isProduction => env == 'production';
   bool get isDevelopment => env == 'development';
+  bool get hasApiKey => apiKey.isNotEmpty;
 }
 
 /// Loads and parses environment variables from dotenv.
@@ -42,7 +51,15 @@ class EnvironmentLoader {
       sslPinningEnabled: env['SSL_PINNING_ENABLED'] == 'true',
       featureBiometric: env['FEATURE_BIOMETRIC'] == 'true',
       featureOfflineMode: env['FEATURE_OFFLINE_MODE'] == 'true',
+      apiKey: _resolveApiKey(env),
+      reqresEnv: env['REQRES_ENV']?.trim() ?? 'prod',
     );
+  }
+
+  static String _resolveApiKey(Map<String, String> env) {
+    const fromDefine = String.fromEnvironment('REQRES_API_KEY');
+    if (fromDefine.isNotEmpty) return fromDefine;
+    return env['REQRES_API_KEY']?.trim() ?? '';
   }
 }
 

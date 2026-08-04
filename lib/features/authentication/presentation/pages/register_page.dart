@@ -37,7 +37,7 @@ class _RegisterPageState extends State<RegisterPage> {
       appBar: AppBar(title: Text(context.l10n.register)),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state.isSuccess && state.user != null) context.go(RouteConstants.dashboard);
+          if (state.isSuccess && state.user != null) context.go(RouteConstants.home);
           if (state.isFailure) SnackbarService.showError(context, state.failure!.message);
         },
         builder: (context, state) => Padding(
@@ -53,7 +53,11 @@ class _RegisterPageState extends State<RegisterPage> {
                 AppTextField(controller: _confirmCtrl, label: context.l10n.confirmPassword, obscureText: true,
                     validator: (v) => Validators.confirmPassword(v, _passwordCtrl.text)),
                 const SizedBox(height: 24),
-                AppButton(label: context.l10n.register, isLoading: state.isLoading, onPressed: () {
+                AppButton(
+                  expand: true,
+                  label: context.l10n.register,
+                  isLoading: state.isLoading,
+                  onPressed: () {
                   if (_formKey.currentState?.validate() ?? false) {
                     context.read<AuthBloc>().add(AuthRegisterRequested(email: _emailCtrl.text.trim(), password: _passwordCtrl.text));
                   }

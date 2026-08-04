@@ -43,7 +43,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             children: [
               AppTextField(controller: _passwordCtrl, label: context.l10n.password, obscureText: true, validator: Validators.password),
               const SizedBox(height: 24),
-              AppButton(label: context.l10n.resetPassword, isLoading: state.isLoading, onPressed: () {
+              AppButton(
+                expand: true,
+                label: context.l10n.resetPassword,
+                isLoading: state.isLoading,
+                onPressed: () {
                 context.read<AuthBloc>().add(AuthResetPasswordRequested(email: widget.email, password: _passwordCtrl.text));
               }),
             ],

@@ -41,7 +41,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             children: [
               AppTextField(controller: _emailCtrl, label: context.l10n.email, validator: Validators.email),
               const SizedBox(height: 24),
-              AppButton(label: 'Send OTP', isLoading: state.isLoading, onPressed: () {
+              AppButton(
+                expand: true,
+                label: 'Send OTP',
+                isLoading: state.isLoading,
+                onPressed: () {
                 context.read<AuthBloc>().add(AuthForgotPasswordRequested(email: _emailCtrl.text.trim()));
               }),
             ],

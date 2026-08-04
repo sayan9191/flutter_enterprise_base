@@ -47,6 +47,16 @@ class StartupService {
   Future<void> initialize({required String envFile}) async {
     _logger.info('Starting app initialization...');
     await _environmentManager.load(envFile: envFile);
+    if (!_environmentManager.environment.hasApiKey) {
+      _logger.warning(
+        'REQRES_API_KEY is empty. API calls will fail. '
+        'Get a free key at https://app.reqres.in/api-keys and add it to $envFile',
+      );
+    } else {
+      final key = _environmentManager.environment.apiKey;
+      final masked = key.length > 12 ? '${key.substring(0, 12)}...' : '***';
+      _logger.info('ReqRes API key loaded ($masked)');
+    }
     await _hiveStorage.init();
     await _preferences.init();
     await _themeManager.init();

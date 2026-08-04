@@ -1,7 +1,6 @@
 import '../../../../core/base/bloc/base_state.dart';
 import '../../../../core/base/bloc/pagination_bloc.dart';
 import '../../../../core/failure/failure.dart';
-import '../../../../core/failure/failure.dart';
 import '../../domain/entities/user_item.dart';
 
 class HomeState extends PaginationState<UserItem> {

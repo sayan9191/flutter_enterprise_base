@@ -20,7 +20,6 @@ import '../../features/home/domain/usecases/get_users_usecase.dart';
 import '../../features/home/presentation/bloc/home_bloc.dart';
 import '../../features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
-import '../../features/search/presentation/bloc/search_users_bloc.dart';
 import '../../features/settings/presentation/bloc/settings_bloc.dart';
 import '../../features/splash/presentation/bloc/splash_bloc.dart';
 import '../analytics/analytics_service.dart';
@@ -46,7 +45,9 @@ import '../storage/storage_contracts.dart';
 final GetIt getIt = GetIt.instance;
 
 Future<void> configureDependencies({required String envFile}) async {
-  if (getIt.isRegistered<AppLogger>()) return;
+  if (getIt.isRegistered<AppLogger>()) {
+    await getIt.reset();
+  }
 
   getIt.registerSingleton(EnvironmentManager.instance);
   getIt.registerLazySingleton<EventBus>(EventBus.new);
@@ -123,6 +124,7 @@ Future<void> configureDependencies({required String envFile}) async {
   getIt.registerLazySingleton<ApiClient>(
     () => ApiClient(
       environment: getIt<EnvironmentManager>().environment,
+      environmentManager: getIt<EnvironmentManager>(),
       secureStorage: getIt(),
       sessionManager: getIt(),
       networkInfo: getIt(),
@@ -173,9 +175,6 @@ Future<void> configureDependencies({required String envFile}) async {
   getIt.registerLazySingleton(() => GetUsersUseCase(getIt()));
   getIt.registerFactory<HomeBloc>(
     () => HomeBloc(getUsersUseCase: getIt(), logger: getIt()),
-  );
-  getIt.registerFactory<SearchUsersBloc>(
-    () => SearchUsersBloc(getUsersUseCase: getIt(), logger: getIt()),
   );
   getIt.registerFactory<SplashBloc>(
     () => SplashBloc(authRepository: getIt(), preferences: getIt(), logger: getIt()),

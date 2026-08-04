@@ -39,7 +39,7 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state.isSuccess && state.user != null) {
-            context.go(RouteConstants.dashboard);
+            context.go(RouteConstants.home);
           } else if (state.isFailure && state.failure != null) {
             SnackbarService.showError(context, state.failure!.message);
           }
@@ -61,7 +61,11 @@ class _LoginPageState extends State<LoginPage> {
                   child: TextButton(onPressed: () => context.push(RouteConstants.forgotPassword), child: Text(context.l10n.forgotPassword)),
                 ),
                 const SizedBox(height: 8),
-                AppButton(label: context.l10n.login, isLoading: state.isLoading, onPressed: () {
+                AppButton(
+                  expand: true,
+                  label: context.l10n.login,
+                  isLoading: state.isLoading,
+                  onPressed: () {
                   if (_formKey.currentState?.validate() ?? false) {
                     context.read<AuthBloc>().add(AuthLoginRequested(email: _emailCtrl.text.trim(), password: _passwordCtrl.text));
                   }

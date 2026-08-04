@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../config/env/environment_manager.dart';
 import '../../config/env/environment.dart';
 import '../exceptions/app_exception.dart';
 import '../logger/app_logger.dart';
@@ -17,26 +18,33 @@ export 'network_info.dart';
 
 /// Low-level Dio wrapper providing typed HTTP methods.
 class ApiClient {
+  late final Dio _dio;
+
   ApiClient({
     required Environment environment,
+    required EnvironmentManager environmentManager,
     required SecureStorageService secureStorage,
     required SessionManager sessionManager,
     required NetworkInfo networkInfo,
     required AppLogger logger,
-  }) : _dio = Dio(
-          BaseOptions(
-            baseUrl: environment.baseUrl,
-            connectTimeout: NetworkConstants.connectTimeout,
-            receiveTimeout: NetworkConstants.receiveTimeout,
-            sendTimeout: NetworkConstants.sendTimeout,
-            headers: {
-              NetworkConstants.headerContentType:
-                  NetworkConstants.contentTypeJson,
-              NetworkConstants.headerAccept: NetworkConstants.contentTypeJson,
-            },
-          ),
-        ) {
+  }) {
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: environment.baseUrl,
+        connectTimeout: NetworkConstants.connectTimeout,
+        receiveTimeout: NetworkConstants.receiveTimeout,
+        sendTimeout: NetworkConstants.sendTimeout,
+        headers: {
+          NetworkConstants.headerContentType: NetworkConstants.contentTypeJson,
+          NetworkConstants.headerAccept: NetworkConstants.contentTypeJson,
+        },
+      ),
+    );
     _dio.interceptors.addAll([
+      ApiKeyInterceptor(
+        environmentManager: environmentManager,
+        logger: logger,
+      ),
       ConnectivityInterceptor(networkInfo: networkInfo),
       AuthenticationInterceptor(
         secureStorage: secureStorage,
@@ -53,8 +61,6 @@ class ApiClient {
     ]);
     SslPinningConfig.configure(_dio, enabled: environment.sslPinningEnabled);
   }
-
-  final Dio _dio;
 
   Dio get dio => _dio;
 
@@ -188,21 +194,40 @@ class ApiService {
     if (e.type == DioExceptionType.cancel) {
       return CancelException();
     }
+
     final statusCode = e.response?.statusCode;
-    if (statusCode == 401) {
-      return UnauthorizedException();
-    }
-    if (statusCode != null && statusCode >= 500) {
-      return ServerException(
-        message: e.response?.data?.toString() ?? 'Server error',
-        statusCode: statusCode,
-      );
-    }
     final errorModel = e.response?.data is Map<String, dynamic>
         ? ApiErrorModel.fromJson(e.response!.data as Map<String, dynamic>)
         : null;
+    final errorMessage = errorModel?.message ?? e.message ?? 'Request failed';
+
+    if (statusCode == 401) {
+      if (errorModel?.error == 'missing_api_key') {
+        return ValidationException(
+          message:
+              'ReqRes API key is missing. Add REQRES_API_KEY to env/.env.dev '
+              '(free key: https://app.reqres.in/api-keys)',
+        );
+      }
+      if (NetworkConstants.isPublicEndpoint(e.requestOptions.path)) {
+        return ValidationException(
+          message: errorMessage.contains('Invalid')
+              ? errorMessage
+              : 'Invalid email or password',
+        );
+      }
+      return UnauthorizedException(message: errorMessage);
+    }
+
+    if (statusCode != null && statusCode >= 500) {
+      return ServerException(
+        message: errorMessage,
+        statusCode: statusCode,
+      );
+    }
+
     return ServerException(
-      message: errorModel?.message ?? e.message ?? 'Request failed',
+      message: errorMessage,
       statusCode: statusCode,
     );
   }

@@ -2,12 +2,40 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'dart:io';
 
+import '../../../config/env/environment_manager.dart';
 import '../../constants/storage_keys.dart';
 import '../../logger/app_logger.dart';
 import '../../services/session_manager.dart';
 import '../../storage/storage_contracts.dart';
 import '../network_constants.dart';
 import '../network_info.dart';
+
+/// Injects ReqRes x-api-key header on every request from [EnvironmentManager].
+class ApiKeyInterceptor extends Interceptor {
+  ApiKeyInterceptor({
+    required EnvironmentManager environmentManager,
+    required AppLogger logger,
+  })  : _environmentManager = environmentManager,
+        _logger = logger;
+
+  final EnvironmentManager _environmentManager;
+  final AppLogger _logger;
+
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final apiKey = _environmentManager.environment.apiKey;
+    if (apiKey.isNotEmpty) {
+      options.headers[NetworkConstants.headerApiKey] = apiKey;
+    } else {
+      _logger.warning('REQRES_API_KEY is empty — request may fail with 401');
+    }
+    final reqresEnv = _environmentManager.environment.reqresEnv;
+    if (reqresEnv.isNotEmpty) {
+      options.headers[NetworkConstants.headerReqresEnv] = reqresEnv;
+    }
+    handler.next(options);
+  }
+}
 
 /// Injects JWT access token into outgoing requests.
 class AuthenticationInterceptor extends Interceptor {
@@ -25,6 +53,10 @@ class AuthenticationInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    if (NetworkConstants.isPublicEndpoint(options.path)) {
+      return handler.next(options);
+    }
+
     final token = await _secureStorage.read(StorageKeys.accessToken);
     if (token != null && token.isNotEmpty) {
       options.headers[NetworkConstants.headerAuthorization] =
@@ -58,6 +90,16 @@ class TokenRefreshInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     if (err.response?.statusCode != 401) {
+      return handler.next(err);
+    }
+
+    // Do not refresh/logout for login/register or when no session exists.
+    if (NetworkConstants.isPublicEndpoint(err.requestOptions.path)) {
+      return handler.next(err);
+    }
+
+    final refreshToken = await _secureStorage.read(StorageKeys.refreshToken);
+    if (refreshToken == null || refreshToken.isEmpty) {
       return handler.next(err);
     }
 

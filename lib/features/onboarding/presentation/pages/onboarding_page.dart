@@ -39,16 +39,27 @@ class _OnboardingPageState extends State<OnboardingPage> {
           child: Row(
             children: [
               if (_index < pages.length - 1)
-                TextButton(onPressed: () => context.read<OnboardingBloc>().add(const OnboardingCompleteRequested()), child: Text(context.l10n.skip))
-              else
-                const Spacer(),
+                TextButton(
+                  onPressed: () => context
+                      .read<OnboardingBloc>()
+                      .add(const OnboardingCompleteRequested()),
+                  child: Text(context.l10n.skip),
+                ),
+              const Spacer(),
               AppButton(
-                label: _index < pages.length - 1 ? context.l10n.next : context.l10n.getStarted,
+                label: _index < pages.length - 1
+                    ? context.l10n.next
+                    : context.l10n.getStarted,
                 onPressed: () {
                   if (_index < pages.length - 1) {
-                    _controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                    _controller.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
                   } else {
-                    context.read<OnboardingBloc>().add(const OnboardingCompleteRequested());
+                    context
+                        .read<OnboardingBloc>()
+                        .add(const OnboardingCompleteRequested());
                   }
                 },
               ),
