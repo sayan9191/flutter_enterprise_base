@@ -1,0 +1,60 @@
+# Codemagic CI/CD Configuration
+
+This project is Codemagic-ready. Copy the workflow below into Codemagic UI or `codemagic.yaml`.
+
+## Supported Workflows
+
+| Workflow | Entry Point | Output |
+|----------|-------------|--------|
+| Dev APK | `lib/main_dev.dart` | Debug APK |
+| QA APK | `lib/main_qa.dart` | Release APK |
+| Staging | `lib/main_stage.dart` | Release AAB |
+| Production | `lib/main_prod.dart` | Release AAB + IPA |
+
+## Environment Variables (Codemagic)
+
+Set these in Codemagic environment groups:
+
+```
+CM_KEYSTORE_PATH
+CM_KEYSTORE_PASSWORD
+CM_KEY_ALIAS
+CM_KEY_PASSWORD
+FIREBASE_TOKEN
+```
+
+## Sample codemagic.yaml
+
+```yaml
+workflows:
+  android-production:
+    name: Android Production
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      groups:
+        - google_play
+    scripts:
+      - flutter pub get
+      - flutter test
+      - flutter build appbundle -t lib/main_prod.dart --release
+    artifacts:
+      - build/app/outputs/bundle/release/app-release.aab
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+```
+
+## Fastlane
+
+Fastlane lanes can be added under `android/fastlane/` and `ios/fastlane/` for automated store deployment.
+
+## Firebase App Distribution
+
+```bash
+flutter build apk -t lib/main_qa.dart --release
+firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk \
+  --app YOUR_FIREBASE_APP_ID \
+  --groups testers
+```
