@@ -103,4 +103,4 @@ flutter build apk -t lib/main_prod.dart --release
 
 ## License
 
-Proprietary — Internal use only.
+MIT - free to use, learn from and adapt.
